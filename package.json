@@ -1,0 +1,14 @@
+{
+  "name": "dev-project-mgmt",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.0.5"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
