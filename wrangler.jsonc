@@ -3,6 +3,7 @@
   "compatibility_date": "2026-07-16",
   "main": "src/index.js",
   "kv_namespaces": [
-    { "binding": "PROJECT_MGMT_KV", "id": "31c316badd904f1da5df5a80ab4ca4e0" }
+    { "binding": "PROJECT_MGMT_KV", "id": "31c316badd904f1da5df5a80ab4ca4e0" },
+    { "binding": "OAUTH_KV", "id": "631d4446f3c9475592cb9efb24fbcdb9" }
   ]
 }
