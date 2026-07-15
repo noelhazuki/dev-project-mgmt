@@ -64,7 +64,63 @@ const apiHandler = {
         headers: { "Content-Type": "application/json" },
       });
     }
+// ▼ spec関連ツール（list_spec_sections / read_spec_section / write_spec_section）
+    const jsonResponse = (data, status = 200) =>
+      new Response(JSON.stringify(data), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
 
+    const getSpec = async (project) => {
+      const raw = await env.PROJECT_MGMT_KV.get(`spec:${project}`);
+      return raw ? JSON.parse(raw) : null;
+    };
+
+    const putSpec = async (project, specObj) => {
+      await env.PROJECT_MGMT_KV.put(`spec:${project}`, JSON.stringify(specObj));
+    };
+
+    if (url.pathname === "/api/spec/sections" && request.method === "GET") {
+      const project = url.searchParams.get("project");
+      if (!project) return jsonResponse({ error: "project is required" }, 400);
+
+      const spec = await getSpec(project);
+      if (!spec) return jsonResponse({ error: "spec not found for this project" }, 404);
+
+      return jsonResponse({ project, sections: Object.keys(spec) });
+    }
+
+    if (url.pathname === "/api/spec/section" && request.method === "GET") {
+      const project = url.searchParams.get("project");
+      const key = url.searchParams.get("key");
+      if (!project || !key) return jsonResponse({ error: "project and key are required" }, 400);
+
+      const spec = await getSpec(project);
+      if (!spec) return jsonResponse({ error: "spec not found for this project" }, 404);
+      if (!(key in spec)) return jsonResponse({ error: "section not found" }, 404);
+
+      return jsonResponse({ project, key, value: spec[key] });
+    }
+
+    if (url.pathname === "/api/spec/section" && request.method === "POST") {
+      const project = url.searchParams.get("project");
+      const key = url.searchParams.get("key");
+      if (!project || !key) return jsonResponse({ error: "project and key are required" }, 400);
+
+      let value;
+      try {
+        value = await request.json();
+      } catch {
+        return jsonResponse({ error: "invalid JSON body" }, 400);
+      }
+
+      const spec = (await getSpec(project)) || {};
+      spec[key] = value;
+      await putSpec(project, spec);
+
+      return jsonResponse({ project, key, saved: true });
+    }
+    // ▲ spec関連ツール
     return new Response("Not found", { status: 404 });
   },
 };
