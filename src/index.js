@@ -1,4 +1,3 @@
-// deploy trigger
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 
 // ▼ ログイン画面まわり（認証されてないリクエストはここに来る）
