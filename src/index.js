@@ -1,6 +1,6 @@
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 
-// ▼ ログイン画面まわり（認証されてないリクエストはここに来る）
+// ▼ ログイン画面まわり（認証されてないリクエストはここに来るよ）
 const defaultHandler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
