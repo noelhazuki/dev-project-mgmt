@@ -1,5 +1,5 @@
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
-
+// deploy trigger
 // ▼ ログイン画面まわり（認証されてないリクエストはここに来る）
 const defaultHandler = {
   async fetch(request, env, ctx) {
