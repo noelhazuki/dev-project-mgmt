@@ -1,5 +1,6 @@
-import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 // deploy trigger
+import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
+
 // ▼ ログイン画面まわり（認証されてないリクエストはここに来る）
 const defaultHandler = {
   async fetch(request, env, ctx) {
@@ -75,4 +76,6 @@ export default new OAuthProvider({
   apiHandler,
   defaultHandler,
   authorizeEndpoint: "/authorize",
-  tokenEndpoint: "/
+  tokenEndpoint: "/token",
+  clientRegistrationEndpoint: "/register",
+});
