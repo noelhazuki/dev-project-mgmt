@@ -16,12 +16,37 @@ async function putSpec(env, project, specObj) {
 }
 
 // ============================================================
-// MCPサーバー本体（spec関連ツール）
+// PROJECT_STATE 読み書きヘルパー（KVアクセス）
+// ============================================================
+async function getProjectState(env, project) {
+  const raw = await env.PROJECT_MGMT_KV.get(`project_state:${project}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function putProjectState(env, project, stateObj) {
+  await env.PROJECT_MGMT_KV.put(`project_state:${project}`, JSON.stringify(stateObj));
+}
+
+// ============================================================
+// ideas 読み書きヘルパー（KVアクセス）
+// ============================================================
+async function getIdeas(env, project) {
+  const raw = await env.PROJECT_MGMT_KV.get(`ideas:${project}`);
+  return raw ? JSON.parse(raw) : { "思いつき": [], "今後検討": [], "保留": [] };
+}
+
+async function putIdeas(env, project, ideasObj) {
+  await env.PROJECT_MGMT_KV.put(`ideas:${project}`, JSON.stringify(ideasObj));
+}
+
+// ============================================================
+// MCPサーバー本体（spec関連 + project_state関連 + ideas関連ツール）
 // ============================================================
 export class ProjectMgmtMCP extends McpAgent {
   server = new McpServer({ name: "dev-project-mgmt", version: "1.0.0" });
 
   async init() {
+    // ▼ spec関連
     this.server.tool(
       "list_spec_sections",
       { project: z.string().describe("プロジェクトID（例：ADM-001）") },
@@ -76,6 +101,66 @@ export class ProjectMgmtMCP extends McpAgent {
         return { content: [{ type: "text", text: JSON.stringify({ project, key, saved: true }) }] };
       }
     );
+    // ▲ spec関連
+
+    // ▼ project_state関連
+    this.server.tool(
+      "read_project_state",
+      { project: z.string().describe("プロジェクトID") },
+      async ({ project }) => {
+        const state = await getProjectState(this.env, project);
+        if (!state) {
+          return {
+            content: [{ type: "text", text: `project_state not found for project: ${project}` }],
+            isError: true
+          };
+        }
+        return { content: [{ type: "text", text: JSON.stringify({ project, ...state }) }] };
+      }
+    );
+
+    this.server.tool(
+      "update_project_state",
+      {
+        project: z.string().describe("プロジェクトID"),
+        genjou: z.string().describe("現状：今どういう状態か、短く一言"),
+        kadai: z.string().describe("課題：検討中・結論が出てないこと"),
+        tsugi: z.string().describe("次回やる事：箇条書きテキスト")
+      },
+      async ({ project, genjou, kadai, tsugi }) => {
+        const state = { "現状": genjou, "課題": kadai, "次回やる事": tsugi };
+        await putProjectState(this.env, project, state);
+        return { content: [{ type: "text", text: JSON.stringify({ project, saved: true }) }] };
+      }
+    );
+    // ▲ project_state関連
+
+    // ▼ ideas関連
+    this.server.tool(
+      "read_ideas",
+      { project: z.string().describe("プロジェクトID") },
+      async ({ project }) => {
+        const ideas = await getIdeas(this.env, project);
+        return { content: [{ type: "text", text: JSON.stringify({ project, ideas }) }] };
+      }
+    );
+
+    this.server.tool(
+      "append_idea",
+      {
+        project: z.string().describe("プロジェクトID"),
+        category: z.enum(["思いつき", "今後検討", "保留"]).describe("追記するカテゴリ"),
+        text: z.string().describe("追記する内容"),
+        date: z.string().describe("YYYY-MM-DD形式の日付（呼び出し前にuser_time_v0で現在時刻を取得すること）")
+      },
+      async ({ project, category, text, date }) => {
+        const ideas = await getIdeas(this.env, project);
+        ideas[category].push({ date, text });
+        await putIdeas(this.env, project, ideas);
+        return { content: [{ type: "text", text: JSON.stringify({ project, category, saved: true }) }] };
+      }
+    );
+    // ▲ ideas関連
 
     // 疎通確認用。ログインが通っていれば userId が返る
     this.server.tool("whoami", {}, async () => {
