@@ -85,7 +85,7 @@ export class ProjectMgmtMCP extends McpAgent {
 }
 
 // ============================================================
-// ログイン画面（従来通り。固定ID・パスワードはWorker Secretsで設定済み）
+// ログイン画面（従来通り。固定ID・パスワードはWorker Secretsで設定済み。）
 // ============================================================
 const defaultHandler = {
   async fetch(request, env, ctx) {
